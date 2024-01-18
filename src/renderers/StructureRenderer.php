@@ -4,20 +4,8 @@ declare(strict_types=1);
 
 namespace bizley\migration\renderers;
 
-use bizley\migration\table\ColumnInterface;
 use bizley\migration\table\ForeignKeyInterface;
-use bizley\migration\table\IndexInterface;
 use bizley\migration\table\StructureInterface;
-
-use function array_filter;
-use function count;
-use function explode;
-use function implode;
-use function mb_strlen;
-use function mb_substr;
-use function str_repeat;
-use function str_replace;
-use function strpos;
 
 final class StructureRenderer implements StructureRendererInterface
 {
@@ -67,10 +55,6 @@ TEMPLATE;
     /**
      * Renders table name. Name should be provided without the prefix. If name should be with prefix and it is being
      * detected, prefix is removed from the name and replaced by a prefix structure ({{%}}).
-     * @param string $tableName
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @return string
      */
     public function renderName(string $tableName, bool $usePrefix, string $dbPrefix = null): string
     {
@@ -78,8 +62,8 @@ TEMPLATE;
             return $tableName;
         }
 
-        if (!empty($dbPrefix) && strpos($tableName, $dbPrefix) === 0) {
-            $tableName = mb_substr($tableName, mb_strlen($dbPrefix, 'UTF-8'), null, 'UTF-8');
+        if (!empty($dbPrefix) && \strpos($tableName, $dbPrefix) === 0) {
+            $tableName = \mb_substr($tableName, \mb_strlen($dbPrefix, 'UTF-8'), null, 'UTF-8');
         }
 
         return "{{%$tableName}}";
@@ -88,13 +72,6 @@ TEMPLATE;
     /**
      * Renders the migration structure for up().
      * @see https://www.yiiframework.com/doc/api/2.0/yii-db-migration#up()-detail
-     * @param StructureInterface $structure
-     * @param int $indent
-     * @param string $schema
-     * @param string|null $engineVersion
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @return string
      */
     public function renderStructureUp(
         StructureInterface $structure,
@@ -106,7 +83,7 @@ TEMPLATE;
     ): string {
         $tableName = $this->renderName($structure->getName(), $usePrefix, $dbPrefix);
 
-        $renderedStructure = array_filter(
+        $renderedStructure = \array_filter(
             [
                 $this->renderStructureTableUp($structure, $tableName, $indent, $schema, $engineVersion),
                 $this->renderStructurePrimaryKeyUp($structure, $tableName, $indent, $schema),
@@ -115,17 +92,12 @@ TEMPLATE;
             ]
         );
 
-        return implode("\n\n", $renderedStructure);
+        return \implode("\n\n", $renderedStructure);
     }
 
     /**
      * Renders the migration structure for down().
      * @see https://www.yiiframework.com/doc/api/2.0/yii-db-migration#down()-detail
-     * @param StructureInterface $structure
-     * @param int $indent
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @return string
      */
     public function renderStructureDown(
         StructureInterface $structure,
@@ -141,9 +113,6 @@ TEMPLATE;
 
     /**
      * Applies the indent to every row in the template.
-     * @param int $indent
-     * @param string $template
-     * @return string
      */
     private function applyIndent(int $indent, string $template): string
     {
@@ -151,24 +120,18 @@ TEMPLATE;
             return $template;
         }
 
-        $rows = explode("\n", $template);
+        $rows = \explode("\n", $template);
         foreach ($rows as &$row) {
             if ($row !== '') {
-                $row = str_repeat(' ', $indent) . $row;
+                $row = \str_repeat(' ', $indent) . $row;
             }
         }
 
-        return implode("\n", $rows);
+        return \implode("\n", $rows);
     }
 
     /**
-     * Renders the create table statement.
-     * @param StructureInterface $structure
-     * @param string $tableName
-     * @param int $indent
-     * @param string|null $schema
-     * @param string|null $engineVersion
-     * @return string
+     * Renders the create-table statement.
      */
     private function renderStructureTableUp(
         StructureInterface $structure,
@@ -191,14 +154,14 @@ TEMPLATE;
 
         return $this->applyIndent(
             $indent,
-            str_replace(
+            \str_replace(
                 [
                     '{tableName}',
                     '{columns}',
                 ],
                 [
                     $tableName,
-                    implode("\n", $renderedColumns),
+                    \implode("\n", $renderedColumns),
                 ],
                 $this->createTableTemplate
             )
@@ -206,10 +169,7 @@ TEMPLATE;
     }
 
     /**
-     * Renders the drop table statement.
-     * @param string $tableName
-     * @param int $indent
-     * @return string
+     * Renders the drop-table statement.
      */
     private function renderStructureTableDown(
         string $tableName,
@@ -217,16 +177,11 @@ TEMPLATE;
     ): string {
         $template = $this->applyIndent($indent, $this->dropTableTemplate);
 
-        return str_replace('{tableName}', $tableName, $template);
+        return \str_replace('{tableName}', $tableName, $template);
     }
 
     /**
-     * Renders the add primary key statement.
-     * @param StructureInterface $structure
-     * @param string $tableName
-     * @param int $indent
-     * @param string|null $schema
-     * @return string|null
+     * Renders the add-primary-key statement.
      */
     private function renderStructurePrimaryKeyUp(
         StructureInterface $structure,
@@ -239,10 +194,6 @@ TEMPLATE;
 
     /**
      * Renders the add indexes statements.
-     * @param StructureInterface $structure
-     * @param string $tableName
-     * @param int $indent
-     * @return string|null
      */
     private function renderStructureIndexesUp(
         StructureInterface $structure,
@@ -268,17 +219,11 @@ TEMPLATE;
             );
         }
 
-        return count($renderedIndexes) ? implode("\n", $renderedIndexes) : null;
+        return !empty($renderedIndexes) ? \implode("\n", $renderedIndexes) : null;
     }
 
     /**
      * Renders the add foreign keys statements (through the structure).
-     * @param StructureInterface $structure
-     * @param int $indent
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @param string|null $schema
-     * @return string|null
      */
     private function renderStructureForeignKeysUp(
         StructureInterface $structure,
@@ -299,11 +244,6 @@ TEMPLATE;
     /**
      * Renders the add foreign keys statements (direct).
      * @param array<ForeignKeyInterface> $foreignKeys
-     * @param int $indent
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @param string|null $schema
-     * @return string|null
      */
     public function renderForeignKeysUp(
         array $foreignKeys,
@@ -313,7 +253,6 @@ TEMPLATE;
         string $schema = null
     ): ?string {
         $renderedForeignKeys = [];
-        /** @var ForeignKeyInterface $foreignKey */
         foreach ($foreignKeys as $foreignKey) {
             $renderedForeignKeys[] = $this->foreignKeyRenderer->renderUp(
                 $foreignKey,
@@ -324,17 +263,12 @@ TEMPLATE;
             );
         }
 
-        return count($renderedForeignKeys) ? implode("\n", $renderedForeignKeys) : null;
+        return !empty($renderedForeignKeys) ? \implode("\n", $renderedForeignKeys) : null;
     }
 
     /**
      * Renders the drop foreign keys statements.
      * @param array<ForeignKeyInterface> $foreignKeys
-     * @param int $indent
-     * @param bool $usePrefix
-     * @param string|null $dbPrefix
-     * @param string|null $schema
-     * @return string|null
      */
     public function renderForeignKeysDown(
         array $foreignKeys,
@@ -344,7 +278,6 @@ TEMPLATE;
         string $schema = null
     ): ?string {
         $renderedForeignKeys = [];
-        /** @var ForeignKeyInterface $foreignKey */
         foreach ($foreignKeys as $foreignKey) {
             $renderedForeignKeys[] = $this->foreignKeyRenderer->renderDown(
                 $foreignKey,
@@ -354,6 +287,6 @@ TEMPLATE;
             );
         }
 
-        return count($renderedForeignKeys) ? implode("\n", $renderedForeignKeys) : null;
+        return !empty($renderedForeignKeys) ? \implode("\n", $renderedForeignKeys) : null;
     }
 }

@@ -12,8 +12,6 @@ use yii\console\Application;
 use yii\db\Connection;
 use yii\db\Exception;
 
-use function array_key_exists;
-
 abstract class DbTestCase extends TestCase
 {
     /** @var string */
@@ -28,6 +26,7 @@ abstract class DbTestCase extends TestCase
      */
     public static function setUpBeforeClass(): void
     {
+        Yii::$app = null;
         new Application(
             [
                 'id' => 'MigrationTest',
@@ -69,7 +68,7 @@ abstract class DbTestCase extends TestCase
 
             $params = require __DIR__ . '/../config.php';
 
-            if (!array_key_exists(static::$schema, $params)) {
+            if (!\array_key_exists(static::$schema, $params)) {
                 throw new InvalidConfigException('There is no configuration for requested DBMS');
             }
 

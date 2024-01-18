@@ -13,12 +13,6 @@ use ErrorException;
 use yii\base\InvalidConfigException;
 use yii\base\NotSupportedException;
 
-use function array_key_exists;
-use function array_reverse;
-use function count;
-use function in_array;
-use function trim;
-
 final class Inspector implements InspectorInterface
 {
     /** @var HistoryManagerInterface */
@@ -53,13 +47,8 @@ final class Inspector implements InspectorInterface
 
     /**
      * Prepares a blueprint for the upcoming update.
-     * @param StructureInterface $newStructure
-     * @param bool $onlyShow
      * @param array<string> $migrationsToSkip
      * @param array<string> $migrationPaths
-     * @param string|null $schema
-     * @param string|null $engineVersion
-     * @return BlueprintInterface
      * @throws InvalidConfigException
      * @throws ErrorException
      * @throws NotSupportedException
@@ -79,26 +68,24 @@ final class Inspector implements InspectorInterface
         $blueprint = new Blueprint();
         $blueprint->setTableName($this->currentTable);
 
-        if (count($history)) {
+        if (!empty($history)) {
             foreach ($history as $migration => $time) {
-                $migration = trim($migration, '\\');
-                if (in_array($migration, $migrationsToSkip, true)) {
+                $migration = \trim($migration, '\\');
+                if (\in_array($migration, $migrationsToSkip, true)) {
                     continue;
                 }
 
                 $this->extractor->extract($migration, $migrationPaths);
 
-                if ($this->gatherChanges($this->extractor->getChanges()) === false) {
+                if (!$this->gatherChanges($this->extractor->getChanges())) {
                     break;
                 }
             }
 
-            /** @var int $appliedChanges */
-            $appliedChanges = count($this->appliedChanges);
-            if ($appliedChanges) {
+            if (!empty($this->appliedChanges)) {
                 $this->comparator->compare(
                     $newStructure,
-                    $this->structureBuilder->build(array_reverse($this->appliedChanges), $schema, $engineVersion),
+                    $this->structureBuilder->build(\array_reverse($this->appliedChanges), $schema, $engineVersion),
                     $blueprint,
                     $onlyShow,
                     $schema,
@@ -122,14 +109,12 @@ final class Inspector implements InspectorInterface
      */
     private function gatherChanges(?array $changes): bool
     {
-        if ($changes === null || array_key_exists($this->currentTable, $changes) === false) {
+        if ($changes === null || !\array_key_exists($this->currentTable, $changes)) {
             return true;
         }
 
-        $data = array_reverse($changes[$this->currentTable]);
-
         /** @var StructureChangeInterface $change */
-        foreach ($data as $change) {
+        foreach (\array_reverse($changes[$this->currentTable]) as $change) {
             $method = $change->getMethod();
 
             if ($method === 'dropTable') {

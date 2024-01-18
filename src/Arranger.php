@@ -4,15 +4,7 @@ declare(strict_types=1);
 
 namespace bizley\migration;
 
-use bizley\migration\table\ForeignKeyInterface;
 use yii\base\NotSupportedException;
-
-use function array_diff;
-use function array_key_exists;
-use function array_merge_recursive;
-use function array_unique;
-use function array_values;
-use function count;
 
 final class Arranger implements ArrangerInterface
 {
@@ -40,9 +32,8 @@ final class Arranger implements ArrangerInterface
 
         foreach ($inputTables as $inputTable) {
             $this->addDependency($inputTable);
-            $foreignKeys = $this->mapper->getStructureOf($inputTable)->getForeignKeys();
 
-            foreach ($foreignKeys as $foreignKey) {
+            foreach ($this->mapper->getStructureOf($inputTable)->getForeignKeys() as $foreignKey) {
                 $this->addDependency($inputTable, $foreignKey->getReferredTable());
             }
         }
@@ -52,12 +43,10 @@ final class Arranger implements ArrangerInterface
 
     /**
      * Adds dependency of the table.
-     * @param string $table
-     * @param string|null $dependsOnTable
      */
     private function addDependency(string $table, string $dependsOnTable = null): void
     {
-        if (!array_key_exists($table, $this->dependencies)) {
+        if (!\array_key_exists($table, $this->dependencies)) {
             $this->dependencies[$table] = [];
         }
 
@@ -89,15 +78,13 @@ final class Arranger implements ArrangerInterface
     public function getReferencesToPostpone(): array
     {
         $flattenedReferencesToPostpone = [];
-        $referencesToPostponeValues = array_values($this->referencesToPostpone);
-        /** @var array<string> $referencesToPostponeValue */
-        foreach ($referencesToPostponeValues as $referencesToPostponeValue) {
+        foreach ($this->referencesToPostpone as $referencesToPostponeValue) {
             foreach ($referencesToPostponeValue as $reference) {
                 $flattenedReferencesToPostpone[] = $reference;
             }
         }
 
-        return array_unique($flattenedReferencesToPostpone);
+        return \array_unique($flattenedReferencesToPostpone);
     }
 
     /**
@@ -109,21 +96,21 @@ final class Arranger implements ArrangerInterface
         $order = [];
         $checkList = [];
 
-        $inputCount = count($input);
+        $inputCount = \count($input);
 
-        while ($inputCount > count($order)) {
+        while ($inputCount > \count($order)) {
             $done = false;
             $lastCheckedName = $lastCheckedDependency = null;
 
             foreach ($input as $name => $dependencies) {
-                if (array_key_exists($name, $checkList)) {
+                if (\array_key_exists($name, $checkList)) {
                     continue;
                 }
 
                 $resolved = true;
 
                 foreach ($dependencies as $dependency) {
-                    if (!array_key_exists($dependency, $checkList)) {
+                    if (!\array_key_exists($dependency, $checkList)) {
                         $resolved = false;
                         $lastCheckedName = $name;
                         $lastCheckedDependency = $dependency;
@@ -140,7 +127,7 @@ final class Arranger implements ArrangerInterface
             }
 
             if ($done === false) {
-                $input[$lastCheckedName] = array_diff($input[$lastCheckedName], [$lastCheckedDependency]);
+                $input[$lastCheckedName] = \array_diff($input[$lastCheckedName], [$lastCheckedDependency]);
 
                 $this->arrangeDependencies($input);
                 $order = $this->getTablesInOrder();

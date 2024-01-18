@@ -7,18 +7,11 @@ namespace bizley\migration\table;
 use bizley\migration\Schema;
 use yii\base\InvalidArgumentException;
 
-use function array_intersect_assoc;
-use function array_key_exists;
-use function count;
-
 final class StructureBuilder implements StructureBuilderInterface
 {
     /**
      * Builds table structure based on the list of changes from the Inspector.
      * @param array<StructureChangeInterface> $changes
-     * @param string|null $schema
-     * @param string|null $engineVersion
-     * @return StructureInterface
      */
     public function build(array $changes, ?string $schema, ?string $engineVersion): StructureInterface
     {
@@ -29,7 +22,6 @@ final class StructureBuilder implements StructureBuilderInterface
                 throw new InvalidArgumentException('You must provide array of StructureChangeInterface objects.');
             }
 
-            /** @var StructureChangeInterface $change */
             switch ($change->getMethod()) {
                 case 'createTable':
                     $structure->setName($change->getTable());
@@ -100,10 +92,7 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies create table value.
-     * @param StructureInterface $structure
      * @param array<ColumnInterface> $columns
-     * @param string|null $schema
-     * @param string|null $engineVersion
      */
     private function applyCreateTableValue(
         StructureInterface $structure,
@@ -118,10 +107,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies add column value.
-     * @param StructureInterface $structure
-     * @param ColumnInterface $column
-     * @param string|null $schema
-     * @param string|null $engineVersion
      */
     private function applyAddColumnValue(
         StructureInterface $structure,
@@ -153,8 +138,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies drop column value.
-     * @param StructureInterface $structure
-     * @param string $columnName
      */
     private function applyDropColumnValue(StructureInterface $structure, string $columnName): void
     {
@@ -163,7 +146,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies rename column value.
-     * @param StructureInterface $structure
      * @param array<string, string> $data
      */
     private function applyRenameColumnValue(StructureInterface $structure, array $data): void
@@ -179,9 +161,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies add primary key value.
-     * @param StructureInterface $structure
-     * @param PrimaryKeyInterface $primaryKey
-     * @param string|null $schema
      */
     private function applyAddPrimaryKeyValue(
         StructureInterface $structure,
@@ -193,7 +172,7 @@ final class StructureBuilder implements StructureBuilderInterface
         $columns = $structure->getColumns();
 
         foreach ($primaryKey->getColumns() as $columnName) {
-            if (array_key_exists($columnName, $columns)) {
+            if (\array_key_exists($columnName, $columns)) {
                 $column = $columns[$columnName];
                 $columnAppend = $column->getAppend();
                 if (empty($columnAppend)) {
@@ -207,8 +186,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies drop primary key value.
-     * @param StructureInterface $structure
-     * @param string|null $schema
      */
     private function applyDropPrimaryKeyValue(StructureInterface $structure, ?string $schema): void
     {
@@ -219,7 +196,7 @@ final class StructureBuilder implements StructureBuilderInterface
             foreach ($primaryKey->getColumns() as $columnName) {
                 $column = $columns[$columnName];
                 $columnAppend = $column->getAppend();
-                if (array_key_exists($columnName, $columns) && !empty($columnAppend)) {
+                if (\array_key_exists($columnName, $columns) && !empty($columnAppend)) {
                     $column->setAppend($column->removeAppendedPrimaryKeyInfo($schema));
                 }
             }
@@ -230,8 +207,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies add foreign key value.
-     * @param StructureInterface $structure
-     * @param ForeignKeyInterface $foreignKey
      */
     private function applyAddForeignKeyValue(StructureInterface $structure, ForeignKeyInterface $foreignKey): void
     {
@@ -240,8 +215,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies drop foreign key value.
-     * @param StructureInterface $structure
-     * @param string $name
      */
     private function applyDropForeignKeyValue(StructureInterface $structure, string $name): void
     {
@@ -250,8 +223,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies create index value.
-     * @param StructureInterface $structure
-     * @param IndexInterface $index
      */
     private function applyCreateIndexValue(StructureInterface $structure, IndexInterface $index): void
     {
@@ -260,8 +231,8 @@ final class StructureBuilder implements StructureBuilderInterface
         $indexColumns = $index->getColumns();
         if (
             $index->isUnique()
-            && count($indexColumns) === 1
-            && array_key_exists($indexColumns[0], $structure->getColumns())
+            && \count($indexColumns) === 1
+            && \array_key_exists($indexColumns[0], $structure->getColumns())
         ) {
             /** @var ColumnInterface $column */
             $column = $structure->getColumn($indexColumns[0]);
@@ -271,8 +242,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies drop index value.
-     * @param StructureInterface $structure
-     * @param string $name
      */
     private function applyDropIndexValue(StructureInterface $structure, string $name): void
     {
@@ -281,8 +250,8 @@ final class StructureBuilder implements StructureBuilderInterface
             $indexColumns = $index->getColumns();
             if (
                 $index->isUnique()
-                && count($indexColumns) === 1
-                && array_key_exists($indexColumns[0], $structure->getColumns())
+                && \count($indexColumns) === 1
+                && \array_key_exists($indexColumns[0], $structure->getColumns())
                 && ($column = $structure->getColumn($indexColumns[0])) !== null
                 && $column->isUnique()
             ) {
@@ -295,7 +264,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies add comment on column value.
-     * @param StructureInterface $structure
      * @param array<string, string> $data
      */
     private function applyAddCommentOnColumnValue(StructureInterface $structure, array $data): void
@@ -308,8 +276,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Applies drop comment from column value.
-     * @param StructureInterface $structure
-     * @param string $columnName
      */
     private function applyDropCommentFromColumnValue(StructureInterface $structure, string $columnName): void
     {
@@ -321,8 +287,6 @@ final class StructureBuilder implements StructureBuilderInterface
 
     /**
      * Adds automatic indexes made by DB engine.
-     * @param StructureInterface $structure
-     * @param string|null $schema
      */
     private function addHiddenIndexes(StructureInterface $structure, ?string $schema): void
     {
@@ -341,7 +305,7 @@ final class StructureBuilder implements StructureBuilderInterface
                 $foreignKeyColumnsCount = count($foreignKeyColumns);
                 foreach ($indexes as $index) {
                     $indexColumns = $index->getColumns();
-                    if ($foreignKeyColumnsCount === count(array_intersect_assoc($foreignKeyColumns, $indexColumns))) {
+                    if ($foreignKeyColumnsCount === \count(\array_intersect_assoc($foreignKeyColumns, $indexColumns))) {
                         // any index matching the FK columns as the first columns will do
                         continue 2;
                     }
